@@ -1,0 +1,5 @@
+"0","table <- meth %>%"
+"0","  filter(state == ""MT"") %>%"
+"0","  group_by(year > 2006) %>%"
+"0","  summarise(mean(meth))"
+"0","table"

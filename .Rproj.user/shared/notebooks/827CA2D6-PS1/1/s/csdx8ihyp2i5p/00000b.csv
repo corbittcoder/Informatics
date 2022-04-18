@@ -1,0 +1,5 @@
+"0",""
+"0","grpmeans_after <- schooling_after %>% "
+"0","  group_by(progresa) %>%"
+"0","  summarize(mean = mean(education))"
+"0","grpmeans"

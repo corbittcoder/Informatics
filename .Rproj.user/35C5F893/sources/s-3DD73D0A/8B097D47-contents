@@ -1,0 +1,221 @@
+---
+title: "ps02"
+author: "Scott Corbitt"
+date: "4/7/2022"
+output: html_document
+---
+
+### 1. Test Randomization
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(stats)
+progresa <- read.csv("progresa-sample.csv.bz2")
+progresa <- progresa %>% mutate(poor = poor == "pobre")
+head(progresa)
+#find means
+progresa_mean <- progresa %>% 
+  group_by(progresa) %>%
+  summarize(across(everything(), mean, na.rm = TRUE))
+progresa %>%
+  group_by(progresa) %>%
+  summarize(across(everything(), list(1), na.rm=TRUE)) 
+
+%>%
+  spread(progresa)
+
+  mutate(p-value = t.test(unlist("0"), unlist("basal"))$p.value)
+drops <- c("village", "folnum", "year")
+progresa_mean <- progresa_mean[, !names(progresa_mean) %in% drops]
+
+#Transpose matrix
+progresa_diff <- data.frame(t(progresa_mean[-1]))
+colnames(progresa_diff) <- c("Average (C)", "Average (T)")
+progresa_diff %>% mutate(`Difference (T - C)` = `Average (T)`- `Average (C)`, p-value = )
+```
+Number of cases:
+```{r}
+nrow(progresa)
+```
+
+Number of Villages:
+
+```{r}
+length(unique(progresa$village))
+```
+
+Number of cases of poor in progresa villages:
+
+```{r}
+nrow(filter(progresa, progresa == "basal", poor == "pobre"))
+```
+
+### 2. Average Schooling in poor households by village
+
+```{r}
+schooling <- progresa %>%
+  filter(poor == "pobre", year > 96, year < 99, !is.na(sc)) %>%
+  group_by(village, year, progresa) %>%
+  summarize(education=mean(sc))
+
+grpmeans <- schooling %>% 
+  group_by(progresa, year) %>%
+  summarize(mean = mean(education))
+grpmeans
+```
+
+Education is nearly the same between villages in progresa and those not in 1997, as one would expect from random selection. In 1998 they diverge slightly, with progresa villages faring better.
+
+### 3. Display the average schooling rate
+
+```{r}
+library(ggplot2)
+schooling <- progresa %>%
+  filter(poor == "pobre", year == 97, !is.na(sc)) %>%
+  group_by(village, progresa) %>%
+  summarize(education=mean(sc))
+
+grpmeans <- schooling %>% 
+  group_by(progresa) %>%
+  summarize(mean = mean(education))
+
+ggplot <- ggplot(schooling, aes(x=education, fill=progresa)) + 
+  geom_density(alpha = 0.4) + 
+  geom_vline(data = grpmeans, aes(xintercept=mean, color=progresa))
+ggplot
+```
+
+### 4. Repeat for program year
+```{r}
+schooling_after <- progresa %>%
+  filter(poor == "pobre", year == 98, !is.na(sc)) %>%
+  group_by(village, progresa) %>%
+  summarize(education=mean(sc))
+
+grpmeans_after <- schooling_after %>% 
+  group_by(progresa) %>%
+  summarize(mean = mean(education))
+
+ggplot <- ggplot(schooling_after, aes(x=education, fill=progresa)) + 
+  geom_density(alpha = 0.4) + 
+  geom_vline(data = grpmeans_after, aes(xintercept=mean, color=progresa))
+ggplot
+```
+
+### 5. Comment on the results
+
+There is a clear shift after the program is implemented in the villages that implemented it. Although the education rates in treatment and non-treatment villages were similar before Progresa started, afterwards there is divergence, with Progresa villages faring better.
+
+# 2. Measuring impact
+
+### 1. Identifying assumption behind CS estimator
+
+This estimator assumes that the only difference relevant to schooling rates between progresa and non-progresa villages is treatment. This is a fair assumption, since villages were randomly selected to participate in the program so participation can't be driven by another factor which might also impact schooling rates. 
+
+### 2. Why only look at poor households in 1998
+
+Only poor households 1998 onward are eligible for the program - other groups cannot be impacted. Furthermore, in years after 1998, every poor household is eligible, so there would be no difference in treatment.
+
+### 3. Average schooling rate for treated and non-treated households
+
+```{r}
+schooling_after <- progresa %>%
+  filter(poor == "pobre", year == 98, !is.na(sc)) %>%
+  group_by(progresa) %>%
+  summarize(education=mean(sc))
+schooling_after
+schooling_after[[2]][2] - schooling_after[[2]][1]
+```
+
+The difference in average schooling rate between the treated and not-treated groups is 0.0388.
+
+### 4. Was progresa effective
+
+This number suggests that progresa was effective. A student in the treated group is 3.88 percentage points more likely to be in school, which is a fairly large effect when only about 19 percent of kids are not in school. However, we have not yet tested for statistical significance. 
+
+### 5. Linear regression
+
+```{r}
+cs <- lm(sc ~ progresa, data=
+     filter(progresa, poor=="pobre", year==98, !is.na(sc)))
+summary(cs)
+```
+
+### 6. Compare results
+
+The results are the same as before - the x-intercept is at 0.8076 which is the number for the untreated group, while the effect of treatment is 0.0388. 
+
+### 7. Significant or not
+
+The results are statistically significant, with a p-value of 2.2e-16.
+
+### 8. Run multiple regression
+
+```{r}
+m <- lm(sc ~ progresa + hohedu + indig + sex + fam_n + min_dist, data=
+     filter(progresa, poor=="pobre", year==98, !is.na(sc)))
+summary(m)
+```
+
+### 9. Compare
+
+The results aren't very different from before, with a similar effect from progresa (3.55 percentage points this time instead of 3.88) and a significant p-value.
+
+## 2.2 Before-After Estimator
+
+### 1. Identifying assumption for BA estimator
+
+This estimator assumes that the only important difference in progresa villages before and after the program is treatment. This assumption is less good than that for the CS estimator, because we can see in the data in an earlier question that non-treatment villages reduced their education rates in 1998, so something must have been changing in the country.
+
+### 2. Why select only poor in progresa villages?
+
+Only poor in progresa villages experienced treatment in 1998, so they are the only group we would expect to be affected.
+
+### 3. Average schooling rate
+
+```{r}
+progresa_only <- filter(progresa, poor=="pobre", year>96, year<99, progresa=="basal", !is.na(sc))
+schooling_progresa <- progresa_only %>%
+  group_by(year) %>%
+  summarize(education=mean(sc))
+schooling_progresa
+schooling_progresa[[2]][2] - schooling_progresa[[2]][1]
+```
+
+### 4. Was progresa effective
+
+This number suggests that progresa was effective, although we cannot yet be sure since we haven't tested for statistical significance. The effect of treatment on education rates was 2.38 percentage points. 
+
+### 5. Linear regression 
+
+```{r}
+cs <- lm(sc ~ year, data=progresa_only)
+summary(cs)
+```
+
+### 6. Compare
+
+The effect of treatment on education rates is 0.0238, same as before.
+
+### 7. Significance
+
+The p-value is 1.3e-9 which is highly significant.
+
+### 8. Multiple regression
+
+```{r}
+m <- lm(sc ~ year + hohedu + indig + sex + fam_n + min_dist, data=progresa_only)
+summary(m)
+```
+
+### 9. Compare
+
+The other covariates do not substantially impact results, the effect and size are practically the same as before at 0.0233 and 2.05e-9 respectively.
+
+### 10. Identifying assumptions
+
+The CS model assumed that treatment and non-treatment villages were identical except for the treatment in the year 1998. The BA model assumed that the progresa villages were identical in 1997 and 1998 except for treatment. The CS model is stronger since treatment was assigned by randomization, so indeed the only difference should be treatment. The BA model is weaker since many things may change from one year to another besides treatment. 
+
+# 3. Finally
+I spent 4 hours on this project. 

@@ -1,0 +1,5 @@
+"0",""
+"0","csmeans <- data1 %>%"
+"0","  group_by(T) %>%"
+"0","  summarize(mean(y))"
+"0","csmeans"

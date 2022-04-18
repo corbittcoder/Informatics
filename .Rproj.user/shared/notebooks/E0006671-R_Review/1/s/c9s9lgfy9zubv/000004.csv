@@ -1,0 +1,5 @@
+"0","babynames %>%"
+"0","  group_by(name) %>%"
+"0","  summarize(N = sum(n)) %>%"
+"0","  arrange(desc(N)) %>%"
+"0","  head(10)"

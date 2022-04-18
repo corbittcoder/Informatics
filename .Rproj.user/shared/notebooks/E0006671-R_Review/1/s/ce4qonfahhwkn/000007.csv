@@ -1,0 +1,8 @@
+"0","getwd()
+"
+"1","[1]"
+"1"," ""C:/Users/scttc/OneDrive/Old stuff/Documents/Fall UW/info371"""
+"1","
+"
+"0","wvs <- read.delim('wvs-satisfaction-subset.csv.bz2')"
+"0","head(wvs)"

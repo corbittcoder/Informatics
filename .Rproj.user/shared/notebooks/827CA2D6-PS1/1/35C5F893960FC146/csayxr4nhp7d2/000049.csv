@@ -1,0 +1,13 @@
+"0","progresa %>%
+  group_by(progresa) %>%
+  summarize(across(everything(), list(1), na.rm=TRUE)) 
+"
+"1","[1m[33mError[39m:[22m
+[33m![39m Problem with `summarise()` input `..1`.
+[34mi[39m `..1 = across(everything(), list(1), na.rm = TRUE)`.
+[31mx[39m [38;5;232mCan't convert [38;5;235m[48;5;253m`X[[i]]`[49m[38;5;232m, a number, to a function.[39m
+[34mi[39m The error occurred in group 1: progresa = ""0"".
+Backtrace:
+[90m  1. [39mprogresa %>% group_by(progresa) %>% ...
+[90m 16. [39m[1mdplyr[22m `<fn>`(`<rlng_rrr>`)
+"

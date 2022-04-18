@@ -1,0 +1,305 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Test python installation\n",
+    "\n",
+    "This is just a test lab.  We strongly encourage you to run it. Most of it should work with no errors (but you may get warnings if you are using quite a different versions of the libraries).\n",
+    "\n",
+    "## import libraries\n",
+    "\n",
+    "We'll be using many libraries, here we import some of the more common ones."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib\n",
+    "import matplotlib.pyplot as plt\n",
+    "import sklearn\n",
+    "from sklearn.neighbors import KNeighborsClassifier\n",
+    "import sys"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Which versions of programs are we using?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(\"Python:\", sys.version)\n",
+    "print(\"pandas:\", pd.__version__)\n",
+    "print(\"numpy:\", np.__version__)\n",
+    "print(\"matplotlib:\", matplotlib.__version__)\n",
+    "print(\"sklearn:\", sklearn.__version__)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## First test numpy and matplotlib plotting\n",
+    "\n",
+    "You should see a histogram"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "N = 300\n",
+    "x = np.random.normal(size=N)\n",
+    "_ = plt.hist(x, edgecolor=\"k\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Do we have working pandas?\n",
+    "\n",
+    "Pandas is the python data frame library, and we need data frames!\n",
+    "\n",
+    "You should see a tiny data frame with two variables, x and y, and their scatterplot where you see the variables are clearly correlated."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.DataFrame( {'x':x, 'y': x + np.random.normal(size=N)})\n",
+    "print(df.head())\n",
+    "a = plt.scatter(df.x, df.y, edgecolor='k')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Does sklearn work?\n",
+    "\n",
+    "_sklearn_ is one of the favorite predictive modeling libraries.  Does it work?  Let's try a decision boundary plot with nearest neighbors method\n",
+    "\n",
+    "You should see a yellow/purple figure with yellow and purple dots.  (This is 1-nearest-neighbors' decision boundary plot)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "N = 100\n",
+    "X1 = np.random.normal(size=N)\n",
+    "X2 = np.random.normal(size=N)\n",
+    "Y = X1 + X2 + np.random.normal(size=N) > 0\n",
+    "X = np.stack((X1, X2), axis=1)\n",
+    "m = KNeighborsClassifier(n_neighbors=1).fit(X, Y)\n",
+    "## Now greate the regular grid\n",
+    "ex1 = np.linspace(X1.min(), X1.max(), 100)\n",
+    "ex2 = np.linspace(X2.min(), X2.max(), 100)\n",
+    "xx1, xx2 = np.meshgrid(ex1, ex2)\n",
+    "                           # unlike R-s 'expand.grid', meshgrid creates matrices\n",
+    "g = np.stack((xx1.ravel(), xx2.ravel()), axis=1)\n",
+    "                           # we create the design matrix by stacking the xx1, xx2\n",
+    "                           # after unraveling those into columns\n",
+    "## predict on the grid\n",
+    "hatY = m.predict(g).reshape(100,100)\n",
+    "                           # imshow wants a matrix, so we reshape the predicted\n",
+    "                           # vector into one\n",
+    "plt.figure(figsize=(10,10))\n",
+    "ax = plt.subplot(1,1,1)\n",
+    "ax.set_aspect('equal')\n",
+    "ax.imshow(hatY, extent=(X1.min(), X1.max(), X2.min(), X2.max()),\n",
+    "           interpolation='none', origin='lower',\n",
+    "                           # you need to specify that the image begins from below,\n",
+    "                           # not above, otherwise it will be flipped around\n",
+    "           alpha=0.3)\n",
+    "ax.scatter(X1, X2, c=Y, edgecolor='k')\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Tensorflow\n",
+    "\n",
+    "_tensorflow_ is one of the state-of-the-art neural network libraries.  This requires a working installation of tensorflow, and this may be quite a requirement.  We will use it a little bit at the end of the course.  If the following fails, no worries.\n",
+    "\n",
+    "_tensorflow_ works on the jupyterhub server, but you have to install it.  You can do it in different ways, e.g. open terminal and issue command\n",
+    "```\n",
+    "pip install tensorflow\n",
+    "```\n",
+    "\n",
+    "In your own computer we recommend to install it in a separate virtual environment, such as anaconda environment.\n",
+    "\n",
+    "In the following we import tensorflow and do a simple neural network task with _keras_, _tensorflow_'s popular frontend.  If tensorflow is correctly installed, it should work, but you may see warnings regarding missing CUDA (i.e. missing gpu).  This is fine."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import tensorflow as tf\n",
+    "print(\"tensorflow:\", tf.__version__)\n",
+    "from tensorflow.keras.models import Sequential\n",
+    "from tensorflow.keras.layers import Dropout, Dense, BatchNormalization\n",
+    "from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau\n",
+    "from tensorflow.keras.utils import to_categorical\n",
+    "from sklearn.model_selection import train_test_split"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "n = 1200  # how many points\n",
+    "x1 = np.random.normal(size=n)\n",
+    "x2 = np.random.normal(size=n)\n",
+    "alpha = np.arctan2(x2, x1)\n",
+    "r = np.sqrt(x1**2 + x2**2)\n",
+    "c1 = (np.sin(2*alpha + 2*r) > 0).astype('int')\n",
+    "c2 = (np.cos(2*alpha + 2*r) > 0).astype('int')\n",
+    "c = c1 + c2  # this is your target\n",
+    "# features, target:\n",
+    "X = np.column_stack((x1,x2))\n",
+    "y = c\n",
+    "# this is how the data looks like:\n",
+    "plt.figure(figsize=(7,7))\n",
+    "plt.scatter(x1, x2, c=c, s=40, edgecolors='k', alpha=0.6)\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Create the model.  Sequential model means that data is sent from the first layers to the following layers, and not backward (as recursive networks do)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model = Sequential()\n",
+    "model.add(Dense(256, activation='relu',\n",
+    "               input_shape = (2,)))\n",
+    "model.add(Dense(128, activation='relu'))\n",
+    "model.add(Dense(64, activation='relu'))\n",
+    "model.add(Dense(3, activation='softmax'))\n",
+    "model.compile(loss='categorical_crossentropy',\n",
+    "              optimizer='adam',\n",
+    "              metrics=['accuracy'])\n",
+    "model.summary()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Train the model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "color = to_categorical(y)  # need one-hot-encoded categoricals\n",
+    "Xt, Xv, colort, colorv = train_test_split(X, color)\n",
+    "## Model Training:\n",
+    "history = model.fit(\n",
+    "    Xt, colort,\n",
+    "    epochs=50,\n",
+    "    validation_data=(Xv, colorv)\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Finally, predict and plot the decision boundary.  You should see that the predicted (solid color) area captures the data (dots) pretty well but not perfectly."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Predict and plot: take this code as black box\n",
+    "range1 = np.linspace(X[:,0].min(), X[:,0].max(), 100)\n",
+    "range2 = np.linspace(X[:,1].min(), X[:,1].max(), 100)\n",
+    "(xx1, xx2) = np.meshgrid(range1, range2)\n",
+    "Xgrid = np.column_stack((xx1.ravel(), xx2.ravel()))\n",
+    "phat = model.predict(Xgrid)\n",
+    "yhat = np.argmax(phat, axis=-1)\n",
+    "plt.figure(figsize=(7,5))\n",
+    "# plot the predicted values on grid as an image\n",
+    "plt.imshow(yhat.reshape((100,100)),\n",
+    "           alpha=0.3, extent=[xx1.min(), xx1.max(), xx2.min(), xx2.max()],\n",
+    "           origin='lower', aspect='auto')\n",
+    "# add the actual values\n",
+    "plt.scatter(X[:,0], X[:,1], c=y, s=30, alpha=0.6, edgecolor=\"k\")\n",
+    "plt.xlabel(\"x1\")\n",
+    "plt.ylabel(\"x2\")\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}

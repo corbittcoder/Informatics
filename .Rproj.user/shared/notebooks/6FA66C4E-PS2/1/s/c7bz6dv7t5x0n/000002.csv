@@ -1,0 +1,6 @@
+"0","progresa %>%
+  group_by(progresa) %>%
+  summarize(across(everything(), list(1), na.rm=TRUE)) 
+"
+"2","Error in group_by(., progresa) : object 'progresa' not found
+"

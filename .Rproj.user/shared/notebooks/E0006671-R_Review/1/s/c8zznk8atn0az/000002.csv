@@ -1,0 +1,10 @@
+"0",""
+"0","data1 <- read.delim(""../../../data/toy/treatment-cs.csv"") %>%"
+"0","  rename(y = T, T = x)"
+"2","Warning in file(file, ""rt"") :"
+"2","
+ "
+"2"," cannot open file '../../../data/toy/treatment-cs.csv': No such file or directory
+"
+"2","Error in file(file, ""rt"") : cannot open the connection
+"

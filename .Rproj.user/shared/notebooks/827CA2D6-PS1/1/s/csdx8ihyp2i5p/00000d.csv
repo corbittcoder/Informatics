@@ -1,0 +1,5 @@
+"0",""
+"0","ggplot <- ggplot(schooling_after, aes(x=education, fill=progresa)) + "
+"0","  geom_density(alpha = 0.4) + "
+"0","  geom_vline(data = grpmeans_after, aes(xintercept=mean, color=progresa))"
+"0","ggplot"

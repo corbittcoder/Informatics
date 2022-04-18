@@ -1,0 +1,7 @@
+"0","schooling_after <- progresa %>%"
+"0","  filter(poor == ""pobre"", year == 98, !is.na(sc)) %>%"
+"0","  group_by(village, progresa) %>%"
+"0","  summarize(education=mean(sc))"
+"1","`summarise()` has grouped output by 'village'. You can override using the `.groups` argument.
+"
+"0","schooling_after"

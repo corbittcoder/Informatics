@@ -1,0 +1,76 @@
+---
+title: "Test your R install!"
+output: html_document
+---
+
+This is an R install test document.  We compile it in a way that the
+code will not be visible, you will just have the output.  Imagine this
+is a report, and your boss is deeply uninterested in the code.  But
+she very much wants to see the results!
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Load data from a non-default package
+
+```{r cars}
+data(father.son, package="UsingR")
+```
+
+Here we loaded data (Galton 1886 parents/children height data) from
+package _UsingR_.  You probably have to install that package.
+
+## Use **dplyr** commands
+
+Here we use dplyr to convert inches to centimeters.  In the original
+data the height is given in inches.  If it works, you
+have a functioning dplyr installation.
+
+```{r}
+fs <- father.son %>% 
+  mutate(fheight=fheight*2.54,
+         sheight=sheight*2.54)
+```
+
+
+## Do some plotting
+
+Finally, here is the plot of the data.  The dots should be centered
+around 170..180 cm for both horizontally (fathers) and vertically
+(sons).  The chunk option `message=FALSE` should remove the message
+"geom_smooth() using formula...`.  You should _not_ see this message in
+the final document.
+
+```{r, message=FALSE}
+ggplot(fs, aes(fheight, sheight)) +
+  geom_abline(slope=1, intercept=0, color="orangered3") +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE) +
+  labs(x = "Fathers height (cm)",
+       y = "Sons height (cm)")
+```
+
+The black dots depict parent-child pairs (although the data claims it
+is about fathers and sons, Galton was in fact also using mothers and
+daughters).  The red line is one-to-one relationship, meaning that one
+cm taller parents have in average one cm taller children.  As the blue
+regression line shows, this is not at all the case.  Taller parents
+have taller children, but not as much above the mean as parents.  This
+is what Galton (1886) called "regression to mean".
+
+
+## Submission
+
+If unsure, feel free to submit the lab and we'll tell you if you
+submitted the right things.  You should submit:
+
+* rmd file (this one)
+* the final html (or pdf)
+
+and the same for notebook:
+
+* notebook .ipynb
+* final html (or pdf)

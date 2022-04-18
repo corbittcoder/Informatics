@@ -1,0 +1,84 @@
+---
+title: "Meth"
+author: "Scott Corbitt"
+date: "4/6/2022"
+output: html_document
+---
+
+### Load the Data
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+meth <- read.delim("yrbs.tsv.bz2")
+
+head(meth)
+```
+
+### What is Outcome, What is Treatment?
+
+The treatment we are attempting to measure is exposure to the Montana Meth Prevention Project, which we approximate by state of residence and TV viewing time. The outcome is use of meth. 
+
+### Comparing Averages Before and After
+
+```{r}
+table <- meth %>%
+  filter(year > 2006) %>%
+  group_by( state) %>%
+  summarize(meth = mean(meth))
+
+table
+```
+The difference in meth usage is as follows:
+```{r}
+filter(table, state == 'MT')['meth'] - filter(table, state == 'XX')['meth']
+```
+
+### Why should we compare only post-project years?
+
+Those are the years after the intervention.
+
+### Regression with no controls
+
+```{r}
+lm(meth ~ state, data = filter(meth, year > 2006)) %>% summary()
+```
+
+This means living in Montana is correlated with not using meth after 2006. The p-value is .5539, which is not significant.
+
+### What is the identifying assumption?
+
+The assumption is that the treatment and control group were the same on average except for the treatment. This is not a reasonable assumption because we can see from the data that Montana had a much higher meth usage rate prior to the intervention.
+
+# Before-After Estimator
+
+### Simple table
+
+```{r}
+table <- meth %>%
+  filter(state == "MT") %>%
+  group_by(year > 2006) %>%
+  summarise(mean(meth))
+table
+```
+
+### Regression
+
+```{r}
+
+lm(meth ~ year > 2006, data = filter(meth, state == "MT")) %>% summary()
+```
+
+### Interpret the results
+
+The program was associated with a 3.86 percentage point reduction in meth use in Montana. It is statistically significant since the p-value is 2.2e^-16
+
+### Identifying assumption
+
+The identifying assumption is that Montana was the same before and after the program except for the treatment. This may not be totally valid since meth use was reduced (though not by as much) in the rest of the country during the same time period too. 
+
+### Comparing assumptions
+
+The assumption that Montana is similar to the rest of the United States except for the program is very suspect, since we can see in the data that meth use was way higher in Montana than the rest of the states before the program even started. The second assumption, that Montana is similar to itself before and after the program, is a better assumption since we can see that meth use didn't drop very much in the rest of the country but it did drop in Montana after the program, implying that not much had changed nationally while the program did shape Montana. 
+
+

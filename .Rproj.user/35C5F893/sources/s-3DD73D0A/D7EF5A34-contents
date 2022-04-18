@@ -1,0 +1,148 @@
+---
+title: "ps02"
+author: "Scott Corbitt"
+date: "4/7/2022"
+output: html_document
+---
+
+### 1. Test Randomization
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(stats)
+progresa <- read.csv("progresa-sample.csv.bz2")
+head(progresa)
+#find means
+
+relevant <- progresa %>%
+  filter(poor == "pobre", year == 97)
+  
+progresa_mean <- relevant %>%
+  group_by(progresa) %>%
+  summarize(across(everything(), mean, na.rm = TRUE))
+
+
+drops <- c("village", "folnum", "year", "poor")
+progresa_mean <- progresa_mean[, !names(progresa_mean) %in% drops]
+#Transpose matrix
+progresa_diff <- data.frame(t(progresa_mean[-1]))
+colnames(progresa_diff) <- c("Average (C)", "Average (T)")
+progresa_diff <- progresa_diff %>% mutate(`Difference (T - C)` = `Average (T)`- `Average (C)`)
+progresa_diff <- progresa_diff %>% mutate(`p-value` = `Average (T)`)
+for (i in row.names(progresa_diff)){
+  t = relevant %>% filter(progresa == "basal")
+  c = relevant %>% filter(progresa == "0")
+  progresa_diff[i, "p-value"] = round(t.test(c[i],t[i])$p.value, 4)
+}
+progresa_diff
+```
+
+
+### 2. Significant Difference
+
+There were several p-values less than .05, which means they were significant.
+
+### 3. 1997
+
+1997 is the program start year. The villages should start off the same. However, in 1998 the program has started, so we might expect some differences to appear even if the data is perfectly randomized.
+
+### 4. Why does it matter
+
+If the treatment and control villages are different, then differences post-treatment may not be due to the program. Instead, it is possible that different villages simply evolved differently over time due to other factors.
+
+# 2. Measuring Impact
+
+### 1. Compare Group averages
+
+```{r}
+table <- progresa %>%
+  filter(poor == "pobre") %>%
+  group_by(progresa, year) %>%
+  summarize(sc = mean(sc, na.rm=TRUE))
+
+table
+```
+The DiD is: 
+```{r}
+table[1,'sc'] - table[2,'sc'] - table[3, 'sc'] + table[4, 'sc']
+```
+
+### 2. Estimate the effect using DiD simple regression
+
+```{r}
+progresa <- filter(progresa, poor == "pobre")
+progresa <- mutate(progresa, progresa = progresa == "basal")
+progresa <- mutate(progresa, after = year == 98)
+progresa <- mutate(progresa, afterT = progresa * (year - 97))
+
+lm(sc ~ progresa + after + afterT, data = progresa) %>% summary()
+```
+
+### 3. Interpret coefficients
+
+
+The intercept is the proportion of students in school in the baseline year not in the treatment group. progresaTRUE is the effect of being in the program in the first year (it's a small effect that's not significant, as expected since the program hasn't started yet). afterTRUE is the effect of 1 year passing for those not in the program (likewise small and not significant, meaning not much has changed in a year for those not in the program). afterT is the effect of the program on those in it, and is the value we are most interested in. It's the same value as we found in the table, as expected. 
+
+### 4. Report the Result
+
+The effect of the program is 0.0313. It is statistically significant. 
+
+### 5. Multiple regression
+
+```{r}
+lm(sc ~ sex + indig + dist_sec + grc + fam_n + min_dist + dist_cap + hohedu + hohwag + welfare_index + hohsex + hohage + age + progresa + year + afterT, data = progresa) %>% summary()
+```
+
+### 6. Compare Results
+
+Even after controlling for all other variables, we get a similar effect size of 0.02916 that is statistically significant. 
+
+### 7. 95% confidence interval
+
+One standard deviation is 0.00541, so the upper bound is 0.03998 and the lower bound is 0.01834, which definitely includes our previous effect estimate of 0.0313 in this PS, as well as for the CS estimator estimate of 0.0388 and the BA estimate of 0.0238
+
+### 8. Identifying assumption
+
+The assumption behind this estimator is that without treatment, the poor in progresa villages would have changed their school enrollment according to the same trend as the poor in non-progresa villages. In other words, everything which might have impacted a change in school enrollment during this time period was the same between the two groups.
+
+One way of testing this would be to compare the non-poor of the progresa and non-progresa villages and see if they changed similarly. Since the non-poor couldn't access the program, that would tell us if other factors besides the program could have been responsible for the large effect we saw. 
+
+### 9. Compare assumptions
+
+The assumptions behind the DiD estimator are more plausible than for either the BA or CS estimators. The BA estimator is the weakest, since many things in Mexico could have changed between 1997 and 1998 besides the program such as an economic downturn or surge. The CS estimator is stronger because the villages were randomly assigned to either progresa or not, therefore the only difference between progresa and non-progresa villages in 1998 should be the impact of the program. However, as we saw, some variables show signs of not being totally random between the groups, meaning that the DiD assumption which takes a possible different starting place into account and only assumes that changes relative to the control group are due to the program is the strongest of all.
+
+### 10. Efficacy of progresa
+
+Based on everything we saw above, it looks like the Progresa program was highly effective. All three estimators showed success, even when controlling for all other variables in the dataset. 
+
+# 3. Liedner et al.
+
+### 2. Unmatched analysis
+
+The paper is comparing counties with large universities. There are 22 counties where universities started remotely, and 79 where universities opened in person. This is a total of 101 counties. They also look at 3009 nonuniversity counties for comparison.
+
+### 3. Time period
+
+They are looking at August 2021, 21 days after the start date of the university in each county.
+
+### 4. Treatment
+
+Treatment is whether a school opened in person or online.
+
+### 5. Outcome
+
+The authors discuss various signals of Covid-19 spread, including test positivity rate, testing rate, number of confirmed cases, and whether the county was identified as a hotspot.
+
+### 6. Percentage positive
+
+The authors analyize percentage positive because a greater number of cases may simply be from more people living in the area as students return, or because students are better about getting tested. By comparing the percentage positive the authors can evaluate the possibility that in-person and virtual counties are very different in these regards. 
+
+### 7. DiD
+
+The impact of being in-person is (23.9 - 14.7) - (15.3 - 17.9) which is an effect size of 11.8 cases per 100,000. 
+
+### 8. Identifying assumptions
+
+The identifying assumption is that without in-person classes, those counties would have followed the same trendline as counties with virtual classes. It seems like a reasonable assumption, as the major potential weaknesses with this study - for example, that in-person counties may have increased their total population more than others, and therefore the infection rate statistics may be miscalculated - don't have to do with the identifying assumption. 
+

@@ -1,0 +1,221 @@
+---
+title: "R Review"
+author: Scott Corbitt
+date: "3/28/2022"
+output: html_document
+---
+
+## Babynames
+
+Use the babynames package to demonstrate dplyr functionality
+
+```{r}
+library(tidyverse)
+cat("nonsense\n")
+```
+load babynames
+```{r}
+library(babynames)
+head(babynames)
+tail(babynames)
+```
+Remove "prop" variable from data
+
+```{r}
+babynames <- babynames::babynames %>% #takes from namespace babynames
+  select(!prop)
+babynames %>%
+  head()
+```
+
+take subset of years 1995-2005
+
+```{r}
+babynames <- babynames %>%
+  filter(year >= 1995, year <= 2005)
+babynames %>% 
+  head(3)
+```
+
+what are the most popular names?
+```{r}
+babynames %>% 
+  arrange(desc(n)) %>%
+  head(10)
+```
+
+```{r}
+babynames %>%
+  group_by(name) %>%
+  summarize(N = sum(n)) %>%
+  arrange(desc(N)) %>%
+  head(10)
+```
+
+```{r}
+library(tidyverse)
+flushot <- read.delim("flushot.csv")
+flushot
+```
+
+calculate conditional averages
+```{r}
+avg_no_shot <- flushot %>%
+  filter(shot == 0) %>%
+  summarize(flu = mean(flu)) %>%
+  pull(flu)
+
+avg_shot <- flushot %>%
+  filter(shot == 1) %>%
+  summarize(flu = mean(flu)) %>%
+  pull(flu)
+avg_shot
+```
+
+The difference in probability of contracting flu with and without the shot is `r (avg_shot - avg_no_shot) * 100` percentage points
+
+```{r}
+data(Treatment, package="Ecdat")
+head(Treatment, 2)
+```
+### Day Three Causality in Linear Regression Framework
+```{r}
+data1 <- read.delim("treatment-cs.csv")
+data1
+
+```
+```{r}
+
+data1 <- read.delim("treatment-cs.csv") %>%
+  rename(y = T, T = x)
+data1
+
+
+```
+
+
+```{r}
+
+csmeans <- data1 %>%
+  group_by(T) %>%
+  summarize(mean(y))
+csmeans
+
+```
+```{r}
+
+m <- lm(y ~ T, data=data1)
+summary(m)
+```
+
+
+—---------
+data2 <- read.delim("../../../data/toy/treatment-ba.csv")
+data2
+
+—-------
+
+data2 <- data2 %>%
+  mutate(after = (time > 3) + 0)
+data2
+
+—----------
+
+data2 %>%
+  group_by(after) %>%
+  summarize(mean(y))
+
+—---------
+lm(y ~ I(time > 3), data=data2) %>%
+  summary()
+
+
+—-------------
+
+scand <- read.delim("../../../data/covid/covid-scandinavia.csv.bz2")
+scand %>%
+  head()
+
+—------------
+names(scand)
+
+—-----------
+scand1 <- scand %>%
+  filter(type == "Deaths") %>%
+  select(country, type, growthPC, date)
+scand1 %>%
+  head()
+
+### Day Four
+
+```{r}
+getwd()
+wvs <- read.delim('wvs-satisfaction-subset.csv.bz2')
+head(wvs)
+```
+
+```{r}
+table(wvs$satisfaction)
+```
+
+```{r}
+table(wvs$age)
+```
+
+```{r}
+wvs <- wvs %>%
+  filter(satisfaction > 0, 
+         age > 0, 
+         marital > 0) %>%
+  select(satisfaction, marital, age) %>%
+  mutate(together = marital %in% c(1,2),
+         old = age > 55)
+
+sample_n(wvs, 5)
+```
+```{r}
+ms <- wvs %>%
+  group_by(old, together) %>%
+  summarize(satisfaction = mean(satisfaction))
+ms
+```
+loneliness when young
+```{r}
+ms[1, "satisfaction"] - ms[2, "satisfaction"]
+```
+loneliness when old
+```{r}
+ms[3, "satisfaction"] - ms[4, "satisfaction"]
+```
+```{r}
+lm(satisfaction ~ together + old, data = wvs) %>% summary
+```
+
+```{r}
+wvs %>%
+  mutate(togetherold = together*old) %>%
+  lm(satisfaction ~ old + together + togetherold, data=.) %>%
+  summary()
+
+
+```
+
+
+### 4/11/22 Difference-in-difference estimator
+
+```{r}
+df <- read.delim("treatment-did.csv")
+head(df)
+```
+
+```{r}
+df %>%
+  group_by(T, time) %>%
+  summarize(y = mean(y), .groups="drop")
+```
+
+```{r}
+m <- mutate(df, treatedtime = T*time) %>% lm(y ~ T + time + treatedtime, data=.)
+summary(m)
+```
+
